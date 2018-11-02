@@ -1,0 +1,19 @@
+{
+  "name": "forest-health",
+  "version": "1.0.0",
+  "description": "New Mexico Forest Health: Insect Disease GIS Data",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "big-json": "^2.0.2",
+    "json2csv": "^4.2.1",
+    "lodash": "^4.17.11",
+    "shp2json": "^1.2.1",
+    "us-counties": "^1.0.1",
+    "walk-sync": "^0.3.3",
+    "which-polygon": "^2.2.0"
+  },
+  "scripts": {
+    "build": "node index.js"
+  }
+}
