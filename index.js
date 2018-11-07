@@ -6,6 +6,18 @@ const dataDir = path.join(__dirname, 'data-json')
 const json2csv = require('json2csv').parse
 const bigJSON = require('big-json')
 const findCounty = require('./find-county')
+const desiredFields = [
+  'SURVEY_YEA',
+  'DMG_TYPE',
+  'MORT_TPA',
+  'AGNT_NM',
+  'ACRES'
+]
+
+const stateCodes = {
+  '35': 'NM',
+  '04': 'AZ'
+}
 
 const fields = []
 let allRows = []
@@ -25,7 +37,7 @@ walk(dataDir)
 console.log('find fields that are present in every dataset')
 const commonFields = intersection(...fields)
 
-commonFields.push('county')
+commonFields.push('county', 'state')
 fs.writeFileSync(path.join(__dirname, 'fields.json'), JSON.stringify(commonFields, null, 2))
 
 console.log('clean up each row so it only includes the common fields')
@@ -34,7 +46,8 @@ allRows = allRows.map(row => {
   const county = findCounty([result.lng, result.lat])
   if (county && county.NAME10) {
     result.county = county.NAME10
-    console.log(result.county)
+    result.state = stateCodes[county.STATEFP10]
+    console.log(result.county, result.state)
   }
   return result
 })
@@ -45,9 +58,6 @@ console.log(`write ${allRows.length} rows to ${jsonFile}`)
 
 const stringifyStream = bigJSON.createStringifyStream({body: allRows})
 
-// stringifyStream.on('data', () => {
-//   process.stdout.write('.')
-// })
 stringifyStream.on('end', () => {
   console.log('done')
 })
@@ -63,16 +73,11 @@ function getRowsFromFile (fullPath) {
   const {features} = data
 
   const rows = features.map(feature => {
-    let result = Object.assign({}, feature.properties)
-    let coords = get(feature, 'geometry.coordinates.0.0')
-    if (!coords) {
-      console.log('no coords found', fullPath)
-    } else {
-      // console.log('coords', coords)
-      result.lng = coords[0]
-      result.lat = coords[1]
-    }
-    return result
+    let row = pick(feature.properties, desiredFields)
+    const coords = get(feature, 'geometry.coordinates.0.0')
+    row.lng = coords[0]
+    row.lat = coords[1]
+    return row
   })
 
   return rows
